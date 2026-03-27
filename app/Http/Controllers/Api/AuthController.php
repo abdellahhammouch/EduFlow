@@ -7,7 +7,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
-use LogicException;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -18,22 +18,40 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request): JsonResponse
     {
-        $user = $this->authService->register($request->validated());
-
-        return response()->json([
-            'message' => 'Registration structure is ready. JWT token generation comes next.',
-            'data' => $user,
-        ], 201);
+        return response()->json(
+            $this->authService->register($request->validated()),
+            201,
+        );
     }
 
     public function login(LoginRequest $request): JsonResponse
     {
         try {
-            $this->authService->login($request->validated());
-        } catch (LogicException $exception) {
+            return response()->json($this->authService->login($request->validated()));
+        } catch (ValidationException $exception) {
             return response()->json([
-                'message' => $exception->getMessage(),
-            ], 501);
+                'message' => 'Invalid credentials.',
+                'errors' => $exception->errors(),
+            ], 401);
         }
+    }
+
+    public function me(): JsonResponse
+    {
+        return response()->json($this->authService->me());
+    }
+
+    public function logout(): JsonResponse
+    {
+        $this->authService->logout();
+
+        return response()->json([
+            'message' => 'Successfully logged out.',
+        ]);
+    }
+
+    public function refresh(): JsonResponse
+    {
+        return response()->json($this->authService->refresh());
     }
 }
