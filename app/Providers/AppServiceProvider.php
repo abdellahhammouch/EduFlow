@@ -5,13 +5,15 @@ namespace App\Providers;
 use App\Interfaces\Repositories\CourseGroupRepositoryInterface;
 use App\Interfaces\Repositories\CourseRepositoryInterface;
 use App\Interfaces\Repositories\EnrollmentRepositoryInterface;
+use App\Interfaces\Repositories\PaymentRepositoryInterface;
 use App\Interfaces\Repositories\UserRepositoryInterface;
 use App\Interfaces\Repositories\WishlistRepositoryInterface;
-use App\Repositories\EloquentCourseGroupRepository;
-use App\Repositories\EloquentCourseRepository;
-use App\Repositories\EloquentEnrollmentRepository;
-use App\Repositories\EloquentUserRepository;
-use App\Repositories\EloquentWishlistRepository;
+use App\Repositories\CourseGroupRepository;
+use App\Repositories\CourseRepository;
+use App\Repositories\EnrollmentRepository;
+use App\Repositories\PaymentRepository;
+use App\Repositories\UserRepository;
+use App\Repositories\WishlistRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -21,11 +23,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(UserRepositoryInterface::class, EloquentUserRepository::class);
-        $this->app->bind(CourseRepositoryInterface::class, EloquentCourseRepository::class);
-        $this->app->bind(WishlistRepositoryInterface::class, EloquentWishlistRepository::class);
-        $this->app->bind(CourseGroupRepositoryInterface::class, EloquentCourseGroupRepository::class);
-        $this->app->bind(EnrollmentRepositoryInterface::class, EloquentEnrollmentRepository::class);
+        $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
+        $this->app->bind(CourseRepositoryInterface::class, CourseRepository::class);
+        $this->app->bind(WishlistRepositoryInterface::class, WishlistRepository::class);
+        $this->app->bind(CourseGroupRepositoryInterface::class, CourseGroupRepository::class);
+        $this->app->bind(EnrollmentRepositoryInterface::class, EnrollmentRepository::class);
+        $this->app->bind(PaymentRepositoryInterface::class, PaymentRepository::class);
     }
 
     /**
