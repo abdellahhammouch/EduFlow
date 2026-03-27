@@ -3,10 +3,9 @@
 namespace App\Services;
 
 use App\Interfaces\Repositories\UserRepositoryInterface;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use LogicException;
+use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
@@ -15,9 +14,14 @@ class AuthService
     ) {
     }
 
-    public function register(array $data): User
+    /**
+     * Register a user and immediately issue a JWT.
+     *
+     * @return array<string, mixed>
+     */
+    public function register(array $data): array
     {
-        return DB::transaction(function () use ($data): User {
+        return DB::transaction(function () use ($data): array {
             $user = $this->users->create([
                 'name' => $data['name'],
                 'email' => $data['email'],
@@ -29,14 +33,83 @@ class AuthService
                 $user->interestedDomains()->sync($data['domain_ids']);
             }
 
-            return $user->load('interestedDomains');
+            $user->load('interestedDomains');
+
+            return $this->buildAuthPayload(auth('api')->login($user), $user);
         });
     }
 
-    public function login(array $credentials): never
+    /**
+     * Attempt to authenticate a user and return a JWT payload.
+     *
+     * @return array<string, mixed>
+     */
+    public function login(array $credentials): array
     {
-        unset($credentials);
+        $token = auth('api')->attempt($credentials);
 
-        throw new LogicException('JWT authentication will be wired in the next step.');
+        if ($token === false) {
+            throw ValidationException::withMessages([
+                'email' => ['The provided credentials are incorrect.'],
+            ]);
+        }
+
+        /** @var \App\Models\User $user */
+        $user = auth('api')->user();
+
+        return $this->buildAuthPayload($token, $user->load('interestedDomains'));
+    }
+
+    /**
+     * Return the currently authenticated user payload.
+     *
+     * @return array<string, mixed>
+     */
+    public function me(): array
+    {
+        /** @var \App\Models\User $user */
+        $user = auth('api')->user();
+
+        return [
+            'user' => $user->load('interestedDomains'),
+        ];
+    }
+
+    /**
+     * Invalidate the current token.
+     */
+    public function logout(): void
+    {
+        auth('api')->logout();
+    }
+
+    /**
+     * Refresh the current token.
+     *
+     * @return array<string, mixed>
+     */
+    public function refresh(): array
+    {
+        $token = auth('api')->refresh();
+
+        /** @var \App\Models\User $user */
+        $user = auth('api')->user();
+
+        return $this->buildAuthPayload($token, $user->load('interestedDomains'));
+    }
+
+    /**
+     * Normalize the authentication response body.
+     *
+     * @return array<string, mixed>
+     */
+    private function buildAuthPayload(string $token, object $user): array
+    {
+        return [
+            'user' => $user,
+            'access_token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth('api')->factory()->getTTL() * 60,
+        ];
     }
 }
