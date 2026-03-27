@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Enrollment\StoreEnrollmentRequest;
+use App\Models\Course;
 use App\Services\EnrollmentService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use LogicException;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -19,7 +21,10 @@ class EnrollmentController extends Controller
     public function store(StoreEnrollmentRequest $request): JsonResponse
     {
         try {
-            $enrollment = $this->enrollmentService->create($request->validated());
+            $enrollment = $this->enrollmentService->create([
+                ...$request->validated(),
+                'student_id' => $request->user('api')->id,
+            ]);
 
             return response()->json($enrollment, Response::HTTP_CREATED);
         } catch (LogicException $exception) {
@@ -29,8 +34,22 @@ class EnrollmentController extends Controller
         }
     }
 
-    public function index(int $courseId): JsonResponse
+    public function index(Request $request, int $courseId): JsonResponse
     {
+        $course = Course::query()->find($courseId);
+
+        if ($course === null) {
+            return response()->json([
+                'message' => 'Course not found.',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        if ((int) $course->teacher_id !== (int) $request->user('api')->id) {
+            return response()->json([
+                'message' => 'You can only view enrollments for your own courses.',
+            ], Response::HTTP_FORBIDDEN);
+        }
+
         return response()->json($this->enrollmentService->listByCourse($courseId));
     }
 }
