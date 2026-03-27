@@ -17,7 +17,6 @@ class StoreWishlistRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'student_id' => ['required', 'integer', 'exists:users,id'],
             'course_id' => ['required', 'integer', 'exists:courses,id'],
         ];
     }
