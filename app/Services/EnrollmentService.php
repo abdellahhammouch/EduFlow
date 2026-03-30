@@ -55,6 +55,26 @@ class EnrollmentService
         return $this->enrollments->listByCourse($courseId);
     }
 
+    public function withdraw(int $studentId, int $courseId): Enrollment
+    {
+        $enrollment = $this->enrollments->findByStudentAndCourse($studentId, $courseId);
+
+        if ($enrollment === null) {
+            throw new LogicException('Enrollment not found for this student and course.');
+        }
+
+        if ($enrollment->status === 'withdrawn') {
+            throw new LogicException('This enrollment is already withdrawn.');
+        }
+
+        $this->enrollments->update($enrollment, [
+            'status' => 'withdrawn',
+            'withdrawn_at' => now(),
+        ]);
+
+        return $enrollment->fresh(['course', 'courseGroup', 'payment']);
+    }
+
     /**
      * Ensure the payment is valid for the authenticated student and course.
      */

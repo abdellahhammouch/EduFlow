@@ -29,4 +29,9 @@ class EnrollmentRepository implements EnrollmentRepositoryInterface
             ->latest()
             ->get();
     }
+
+    public function update(Enrollment $enrollment, array $data): bool
+    {
+        return $enrollment->update($data);
+    }
 }

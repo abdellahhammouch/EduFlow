@@ -52,4 +52,20 @@ class EnrollmentController extends Controller
 
         return response()->json($this->enrollmentService->listByCourse($courseId));
     }
+
+    public function withdraw(Request $request, int $courseId): JsonResponse
+    {
+        try {
+            $enrollment = $this->enrollmentService->withdraw(
+                (int) $request->user('api')->id,
+                $courseId,
+            );
+
+            return response()->json($enrollment);
+        } catch (LogicException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
 }
