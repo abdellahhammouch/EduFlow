@@ -14,6 +14,7 @@ use App\Repositories\EnrollmentRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\WishlistRepository;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -36,6 +37,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        ResetPassword::createUrlUsing(function (object $user, string $token): string {
+            $baseUrl = rtrim((string) config('app.frontend_url', config('app.url')), '/');
+
+            return $baseUrl.'/reset-password?token='.$token.'&email='.urlencode($user->email);
+        });
     }
 }
