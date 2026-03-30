@@ -2,10 +2,15 @@
 
 namespace App\Services;
 
+use App\Models\User;
+use Illuminate\Auth\Events\PasswordReset;
 use App\Interfaces\Repositories\UserRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use LogicException;
 
 class AuthService
 {
@@ -96,6 +101,50 @@ class AuthService
         $user = auth('api')->user();
 
         return $this->buildAuthPayload($token, $user->load('interestedDomains'));
+    }
+
+    /**
+     * Send a password reset link to the given email.
+     */
+    public function sendPasswordResetLink(string $email): void
+    {
+        $status = Password::sendResetLink([
+            'email' => $email,
+        ]);
+
+        if ($status !== Password::RESET_LINK_SENT) {
+            throw ValidationException::withMessages([
+                'email' => [__($status)],
+            ]);
+        }
+    }
+
+    /**
+     * Reset the user's password using the token sent by Laravel.
+     */
+    public function resetPassword(array $data): void
+    {
+        $status = Password::reset(
+            [
+                'email' => $data['email'],
+                'password' => $data['password'],
+                'password_confirmation' => $data['password_confirmation'],
+                'token' => $data['token'],
+            ],
+            function (User $user, string $password): void {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                ])->setRememberToken(Str::random(60));
+
+                $user->save();
+
+                event(new PasswordReset($user));
+            },
+        );
+
+        if ($status !== Password::PASSWORD_RESET) {
+            throw new LogicException(__($status));
+        }
     }
 
     /**
