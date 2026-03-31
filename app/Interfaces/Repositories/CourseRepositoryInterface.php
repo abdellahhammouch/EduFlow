@@ -21,4 +21,6 @@ interface CourseRepositoryInterface
     public function paginateByTeacher(int $teacherId, int $perPage = 15): LengthAwarePaginator;
 
     public function recommendedForStudent(int $studentId, int $limit = 10): Collection;
+
+    public function statsByTeacher(int $teacherId): Collection;
 }
