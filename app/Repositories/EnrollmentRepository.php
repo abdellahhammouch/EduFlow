@@ -21,6 +21,15 @@ class EnrollmentRepository implements EnrollmentRepositoryInterface
             ->first();
     }
 
+    public function listByStudent(int $studentId): Collection
+    {
+        return Enrollment::query()
+            ->with(['course.teacher', 'course.domain', 'courseGroup', 'payment'])
+            ->where('student_id', $studentId)
+            ->latest()
+            ->get();
+    }
+
     public function listByCourse(int $courseId): Collection
     {
         return Enrollment::query()

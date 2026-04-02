@@ -11,6 +11,8 @@ interface EnrollmentRepositoryInterface
 
     public function findByStudentAndCourse(int $studentId, int $courseId): ?Enrollment;
 
+    public function listByStudent(int $studentId): Collection;
+
     public function listByCourse(int $courseId): Collection;
 
     public function update(Enrollment $enrollment, array $data): bool;
