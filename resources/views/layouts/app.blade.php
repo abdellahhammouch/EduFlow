@@ -19,10 +19,18 @@
                     forgotPassword: '{{ route('password.forgot') }}',
                     teacherDashboard: '{{ route('dashboard.teacher') }}',
                     studentDashboard: '{{ route('dashboard.student') }}',
+                    teacherCourses: '{{ route('teacher.courses') }}',
+                    teacherGroups: '{{ route('teacher.groups') }}',
+                    teacherStats: '{{ route('teacher.stats') }}',
+                    studentRecommendations: '{{ route('student.recommendations') }}',
+                    studentWishlist: '{{ route('student.wishlist') }}',
+                    studentEnrollments: '{{ route('student.enrollments') }}',
                 },
+                stripeKey: '{{ (string) config('services.stripe.key') }}',
             };
         </script>
 
+        <script src="https://js.stripe.com/v3/"></script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body
