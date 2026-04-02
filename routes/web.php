@@ -31,9 +31,15 @@ Route::get('/reset-password', function () {
 
 Route::view('/teacher/dashboard', 'dashboard.teacher')->name('dashboard.teacher');
 Route::view('/student/dashboard', 'dashboard.student')->name('dashboard.student');
+Route::view('/student/recommendations', 'student.recommendations')->name('student.recommendations');
+Route::view('/student/wishlist', 'student.wishlist')->name('student.wishlist');
+Route::view('/student/enrollments', 'student.enrollments')->name('student.enrollments');
 
 Route::get('/teacher/courses', function () {
     return view('teacher.courses', [
         'domains' => Domain::query()->orderBy('name')->get(),
     ]);
 })->name('teacher.courses');
+
+Route::view('/teacher/groups', 'teacher.groups')->name('teacher.groups');
+Route::view('/teacher/stats', 'teacher.stats')->name('teacher.stats');
