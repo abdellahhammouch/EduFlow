@@ -51,6 +51,7 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/wishlist', [WishlistController::class, 'store']);
         Route::delete('/wishlist/{courseId}', [WishlistController::class, 'destroy']);
         Route::post('/payments/intent', [PaymentController::class, 'createIntent']);
+        Route::get('/enrollments', [EnrollmentController::class, 'myEnrollments']);
         Route::post('/enrollments', [EnrollmentController::class, 'store']);
         Route::post('/courses/{courseId}/withdraw', [EnrollmentController::class, 'withdraw']);
     });
