@@ -53,6 +53,13 @@ class EnrollmentController extends Controller
         return response()->json($this->enrollmentService->listByCourse($courseId));
     }
 
+    public function myEnrollments(Request $request): JsonResponse
+    {
+        return response()->json(
+            $this->enrollmentService->listByStudent((int) $request->user('api')->id),
+        );
+    }
+
     public function withdraw(Request $request, int $courseId): JsonResponse
     {
         try {
