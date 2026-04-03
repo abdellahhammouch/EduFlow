@@ -55,6 +55,11 @@ class EnrollmentService
         return $this->enrollments->listByCourse($courseId);
     }
 
+    public function listByStudent(int $studentId): Collection
+    {
+        return $this->enrollments->listByStudent($studentId);
+    }
+
     public function withdraw(int $studentId, int $courseId): Enrollment
     {
         $enrollment = $this->enrollments->findByStudentAndCourse($studentId, $courseId);
