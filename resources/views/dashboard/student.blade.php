@@ -37,13 +37,24 @@
                 <p class="text-base font-semibold text-slate-950">Découvrir mes cours</p>
                 <p class="mt-2 text-sm leading-6 text-slate-600">Explorer le catalogue et consulter les détails utiles.</p>
             </a>
-            <a class="action-card" href="#">
+            <a class="action-card" href="{{ route('student.wishlist') }}">
                 <p class="text-base font-semibold text-slate-950">Gérer ma wishlist</p>
                 <p class="mt-2 text-sm leading-6 text-slate-600">Sauvegarder les cours à revoir plus tard.</p>
             </a>
-            <a class="action-card" href="#">
+            <a class="action-card" href="{{ route('student.enrollments') }}">
                 <p class="text-base font-semibold text-slate-950">Suivre mes inscriptions</p>
                 <p class="mt-2 text-sm leading-6 text-slate-600">Payer, s’inscrire puis voir le groupe attribué.</p>
+            </a>
+        </div>
+
+        <div class="grid gap-5 lg:grid-cols-2">
+            <a class="action-card" href="{{ route('student.recommendations') }}">
+                <p class="text-base font-semibold text-slate-950">Voir mes recommandations</p>
+                <p class="mt-2 text-sm leading-6 text-slate-600">Retrouver les cours proposés selon tes centres d’intérêt.</p>
+            </a>
+            <a class="action-card" href="{{ route('student.enrollments') }}">
+                <p class="text-base font-semibold text-slate-950">Voir mon groupe</p>
+                <p class="mt-2 text-sm leading-6 text-slate-600">Chaque inscription affiche aussi le groupe reçu automatiquement.</p>
             </a>
         </div>
     </section>
