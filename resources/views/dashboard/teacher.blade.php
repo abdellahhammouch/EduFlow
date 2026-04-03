@@ -37,11 +37,11 @@
                 <p class="text-base font-semibold text-slate-950">Gérer mes cours</p>
                 <p class="mt-2 text-sm leading-6 text-slate-600">Créer, modifier et supprimer les cours actifs.</p>
             </a>
-            <a class="action-card" href="#">
+            <a class="action-card" href="{{ route('teacher.groups') }}">
                 <p class="text-base font-semibold text-slate-950">Voir mes groupes</p>
                 <p class="mt-2 text-sm leading-6 text-slate-600">Parcourir les groupes par cours et leurs participants.</p>
             </a>
-            <a class="action-card" href="#">
+            <a class="action-card" href="{{ route('teacher.stats') }}">
                 <p class="text-base font-semibold text-slate-950">Suivre les statistiques</p>
                 <p class="mt-2 text-sm leading-6 text-slate-600">Consulter le nombre d’inscrits et l’activité de tes cours.</p>
             </a>
