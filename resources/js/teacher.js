@@ -43,6 +43,15 @@ function showMessage(container, message, type) {
     setMessageClasses(container, type || 'error');
 }
 
+function hideMessage(container) {
+    if (!container) {
+        return;
+    }
+
+    container.classList.add('hidden');
+    container.textContent = '';
+}
+
 function createCourseHtml(course) {
     let description = course.description || '';
     let domainName = 'Domaine';
@@ -315,8 +324,216 @@ async function initTeacherCoursesPage() {
     });
 
     await loadCourses();
-};
+}
+
+function createGroupCard(group, courseId) {
+    const enrollments = group.enrollments ? group.enrollments : [];
+    let activeCount = 0;
+
+    for (let i = 0; i < enrollments.length; i += 1) {
+        if (enrollments[i].status === 'active') {
+            activeCount += 1;
+        }
+    }
+
+    return `
+        <article class="surface-card space-y-3">
+            <h3 class="text-lg font-semibold text-gray-900">Groupe ${group.group_number}</h3>
+            <p class="text-sm text-gray-600">Étudiants actifs : ${activeCount}</p>
+            <button class="btn-secondary" type="button" data-view-participants="${group.id}" data-course-id="${courseId}">
+                Voir les participants
+            </button>
+            <div class="mt-3 hidden rounded border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700" data-participants-box="${group.id}"></div>
+        </article>
+    `;
+}
+
+function createStatsCard(stat) {
+    return `
+        <article class="surface-card">
+            <h3 class="text-lg font-semibold text-gray-900">${escapeHtml(stat.title)}</h3>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                <div class="simple-box">
+                    <p class="text-xs uppercase text-gray-500">Inscriptions</p>
+                    <p class="mt-1 text-lg font-semibold text-gray-900">${stat.active_enrollments_count}</p>
+                </div>
+                <div class="simple-box">
+                    <p class="text-xs uppercase text-gray-500">Retraits</p>
+                    <p class="mt-1 text-lg font-semibold text-gray-900">${stat.withdrawn_enrollments_count}</p>
+                </div>
+                <div class="simple-box">
+                    <p class="text-xs uppercase text-gray-500">Groupes</p>
+                    <p class="mt-1 text-lg font-semibold text-gray-900">${stat.groups_count}</p>
+                </div>
+                <div class="simple-box">
+                    <p class="text-xs uppercase text-gray-500">Paiements</p>
+                    <p class="mt-1 text-lg font-semibold text-gray-900">${stat.succeeded_payments_count}</p>
+                </div>
+                <div class="simple-box">
+                    <p class="text-xs uppercase text-gray-500">Revenu</p>
+                    <p class="mt-1 text-lg font-semibold text-gray-900">${formatPrice(stat.revenue)}</p>
+                </div>
+            </div>
+        </article>
+    `;
+}
+
+function renderTeacherCards(container, html, emptyMessage) {
+    if (!container) {
+        return;
+    }
+
+    if (html === '') {
+        container.innerHTML = '<div class="surface-card">' + emptyMessage + '</div>';
+        return;
+    }
+
+    container.innerHTML = html;
+}
+
+function fillTeacherCourseSelect(select, courses) {
+    let html = '<option value="">Choisir un cours</option>';
+
+    for (let i = 0; i < courses.length; i += 1) {
+        html += '<option value="' + courses[i].id + '">' + escapeHtml(courses[i].title) + '</option>';
+    }
+
+    select.innerHTML = html;
+}
+
+async function initTeacherGroupsPage() {
+    const page = document.querySelector('[data-teacher-groups-page]');
+
+    if (!page) {
+        return;
+    }
+
+    const courseSelect = page.querySelector('[data-teacher-group-course-select]');
+    const message = page.querySelector('[data-teacher-groups-message]');
+    const list = page.querySelector('[data-teacher-groups-list]');
+
+    async function loadTeacherCourses() {
+        try {
+            const response = await fetchApi('/teacher/courses', {
+                auth: true,
+            });
+
+            const courses = response && response.data ? response.data : [];
+
+            fillTeacherCourseSelect(courseSelect, courses);
+
+            if (courses.length > 0) {
+                courseSelect.value = String(courses[0].id);
+                await loadGroups(courseSelect.value);
+            }
+        } catch (error) {
+            showMessage(message, getErrorMessage(error, 'Impossible de charger les cours.'), 'error');
+        }
+    }
+
+    async function loadGroups(courseId) {
+        if (!courseId) {
+            renderTeacherCards(list, '', 'Choisis un cours pour afficher ses groupes.');
+            return;
+        }
+
+        try {
+            const groups = await fetchApi('/teacher/courses/' + courseId + '/groups', {
+                auth: true,
+            });
+            let html = '';
+
+            for (let i = 0; i < groups.length; i += 1) {
+                html += createGroupCard(groups[i], courseId);
+            }
+
+            renderTeacherCards(list, html, 'Aucun groupe pour ce cours.');
+            hideMessage(message);
+        } catch (error) {
+            renderTeacherCards(list, '', 'Impossible de charger les groupes.');
+            showMessage(message, getErrorMessage(error, 'Impossible de charger les groupes.'), 'error');
+        }
+    }
+
+    courseSelect.addEventListener('change', async function () {
+        await loadGroups(courseSelect.value);
+    });
+
+    list.addEventListener('click', async function (event) {
+        const button = event.target.closest('[data-view-participants]');
+
+        if (!button) {
+            return;
+        }
+
+        const groupId = button.getAttribute('data-view-participants');
+        const courseId = button.getAttribute('data-course-id');
+        const box = list.querySelector('[data-participants-box="' + groupId + '"]');
+
+        if (!box) {
+            return;
+        }
+
+        button.disabled = true;
+        button.textContent = 'Chargement...';
+
+        try {
+            const response = await fetchApi('/teacher/courses/' + courseId + '/groups/' + groupId + '/participants', {
+                auth: true,
+            });
+            const participants = response.participants ? response.participants : [];
+            let html = '';
+
+            if (!participants.length) {
+                html = 'Aucun participant actif dans ce groupe.';
+            } else {
+                for (let i = 0; i < participants.length; i += 1) {
+                    html += '<p>' + escapeHtml(participants[i].student_name) + ' - ' + escapeHtml(participants[i].student_email) + '</p>';
+                }
+            }
+
+            box.innerHTML = html;
+            box.classList.remove('hidden');
+        } catch (error) {
+            showMessage(message, getErrorMessage(error, 'Impossible de charger les participants.'), 'error');
+        } finally {
+            button.disabled = false;
+            button.textContent = 'Voir les participants';
+        }
+    });
+
+    await loadTeacherCourses();
+}
+
+async function initTeacherStatsPage() {
+    const page = document.querySelector('[data-teacher-stats-page]');
+
+    if (!page) {
+        return;
+    }
+
+    const message = page.querySelector('[data-teacher-stats-message]');
+    const list = page.querySelector('[data-teacher-stats-list]');
+
+    try {
+        const stats = await fetchApi('/teacher/courses/stats', {
+            auth: true,
+        });
+        let html = '';
+
+        for (let i = 0; i < stats.length; i += 1) {
+            html += createStatsCard(stats[i]);
+        }
+
+        renderTeacherCards(list, html, 'Aucune statistique à afficher.');
+    } catch (error) {
+        renderTeacherCards(list, '', 'Impossible de charger les statistiques.');
+        showMessage(message, getErrorMessage(error, 'Impossible de charger les statistiques.'), 'error');
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function () {
     initTeacherCoursesPage();
+    initTeacherGroupsPage();
+    initTeacherStatsPage();
 });
